@@ -1,9 +1,11 @@
 // lib/database_service.dart
 import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
 import 'models/task_data.dart';
 
 class DatabaseService {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  Timer? _debounceTimer;
 
   // Save dropdown items
   Future<void> saveDropdownItems({
@@ -34,18 +36,26 @@ class DatabaseService {
   }
 
   // Save tasks
-  Future<void> saveTasks(Map<String, TaskData> tasks) async {
+Future<void> saveTasks(Map<String, TaskData> tasks) async {
+  if (_debounceTimer?.isActive ?? false) {
+    _debounceTimer?.cancel();
+  }
+
+  _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+    print('Saving tasks...');
     try {
       final Map<String, dynamic> tasksMap = {};
       tasks.forEach((key, value) {
         tasksMap[key] = value.toJson();
       });
       await _database.child('tasks').set(tasksMap);
+      print('Tasks saved successfully.');
     } catch (e) {
       print('Error saving tasks: $e');
       rethrow;
     }
-  }
+  });
+}
 
   // Load tasks
   Future<Map<String, TaskData>> loadTasks() async {

@@ -35,31 +35,23 @@ class _EditDropdownDialogState extends State<EditDropdownDialog> {
     super.dispose();
   }
 
-  void _addNewItem() {
-    setState(() {
-      var newController =
-          TextEditingController(text: 'Item ${_controllers.length + 1}');
-      _controllers.add(newController);
-      print('Added new controller with text: ${newController.text}');
-      print('Total controllers: ${_controllers.length}');
+void _addNewItem() {
+  setState(() {
+    var newController = TextEditingController(text: 'Item ${_controllers.length + 1}');
+    _controllers.add(newController);
+    print('Added new item. Total items: ${_controllers.length}');
+  });
+}
 
-      // Print all controllers' values
-      for (int i = 0; i < _controllers.length; i++) {
-        print('Controller $i current value: "${_controllers[i].text}"');
-      }
+void _removeItem(int index) {
+  if (_controllers.length > 1) {
+    setState(() {
+      _controllers[index].dispose();
+      _controllers.removeAt(index);
+      print('Removed item at index $index. Total items: ${_controllers.length}');
     });
   }
-
-  void _removeItem(int index) {
-    if (_controllers.length > 1) {
-      setState(() {
-        _controllers[index].dispose();
-        _controllers.removeAt(index);
-        print(
-            'Removed controller at index $index. Total controllers: ${_controllers.length}');
-      });
-    }
-  }
+}
 
   @override
   Widget build(BuildContext context) {

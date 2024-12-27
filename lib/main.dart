@@ -13,8 +13,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -33,23 +31,10 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-// class TaskData {
-//   bool isChecked;
-//   Map<String, bool> subtasks;
-//   bool areSubtasksVisible;
-
-//   TaskData({
-//     required this.isChecked,
-//     required this.subtasks,
-//     this.areSubtasksVisible = true,
-//   });
-// }
-
 class _MyHomePageState extends State<MyHomePage> {
   final DatabaseService _databaseService = DatabaseService();
   List<String> items1 = ['Item 1', 'Item 2', 'Item 3'];
   List<String> items2 = ['Option A', 'Option B', 'Option C'];
-  
   String? selectedItem1;
   String? selectedItem2;
   Map<String, TaskData> tasks = {};
@@ -62,8 +47,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _loadInitialData() async {
     try {
-      final dropdownItems1 = await _databaseService.loadDropdownItems('dropdown1');
-      final dropdownItems2 = await _databaseService.loadDropdownItems('dropdown2');
+      final dropdownItems1 =
+          await _databaseService.loadDropdownItems('dropdown1');
+      final dropdownItems2 =
+          await _databaseService.loadDropdownItems('dropdown2');
       final savedTasks = await _databaseService.loadTasks();
 
       setState(() {
@@ -84,40 +71,54 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void createCheckbox() async {
     if (selectedItem1 != null && selectedItem2 != null) {
-      setState(() {
-        final taskKey = '$selectedItem1 - $selectedItem2';
-        tasks[taskKey] = TaskData(
-          isChecked: false,
-          subtasks: {},
-        );
-      });
-      
-      try {
-        await _databaseService.saveTasks(tasks);
-      } catch (e) {
-        print('Error saving new checkbox: $e');
+      final taskKey = '$selectedItem1 - $selectedItem2';
+      print('Creating checkbox with key: $taskKey');
+      if (!tasks.containsKey(taskKey)) {
+        setState(() {
+          tasks[taskKey] = TaskData(
+            isChecked: false,
+            subtasks: {},
+          );
+        });
+
+        try {
+          await _databaseService.saveTasks(tasks);
+          print('Checkbox saved successfully.');
+        } catch (e) {
+          print('Error saving new checkbox: $e');
+        }
+      } else {
+        print('Task already exists: $taskKey');
       }
+    } else {
+      print('Selected items are null. Cannot create checkbox.');
     }
   }
 
   void toggleSubtasksVisibility(String taskKey) async {
-    setState(() {
-      tasks[taskKey]!.areSubtasksVisible = !tasks[taskKey]!.areSubtasksVisible;
-    });
-    
-    try {
-      await _databaseService.saveTasks(tasks);
-    } catch (e) {
-      print('Error saving subtask visibility: $e');
+    if (tasks.containsKey(taskKey)) {
+      setState(() {
+        tasks[taskKey]!.areSubtasksVisible =
+            !tasks[taskKey]!.areSubtasksVisible;
+      });
+
+      try {
+        await _databaseService.saveTasks(tasks);
+      } catch (e) {
+        print('Error saving subtask visibility: $e');
+      }
+    } else {
+      print('Task key not found: $taskKey');
     }
   }
 
   void addSubtask(String parentKey) async {
     setState(() {
-      final subtaskKey = '$parentKey-Subtask ${tasks[parentKey]!.subtasks.length + 1}';
+      final subtaskKey =
+          '$parentKey-Subtask ${tasks[parentKey]!.subtasks.length + 1}';
       tasks[parentKey]!.subtasks[subtaskKey] = false;
     });
-    
+
     try {
       await _databaseService.saveTasks(tasks);
     } catch (e) {
@@ -129,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       tasks.remove(taskKey);
     });
-    
+
     try {
       await _databaseService.saveTasks(tasks);
     } catch (e) {
@@ -143,19 +144,19 @@ class _MyHomePageState extends State<MyHomePage> {
         items: newItems,
         dropdownId: 'dropdown1',
       );
-      
+
       setState(() {
         items1 = List<String>.from(newItems);
         if (selectedItem1 != null && !newItems.contains(selectedItem1)) {
           selectedItem1 = null;
         }
-        
+
         tasks.removeWhere((key, value) {
           String taskItem1 = key.split(' - ')[0];
           return !newItems.contains(taskItem1);
         });
       });
-      
+
       await _databaseService.saveTasks(tasks);
     } catch (e) {
       print('Error updating items1: $e');
@@ -168,19 +169,19 @@ class _MyHomePageState extends State<MyHomePage> {
         items: newItems,
         dropdownId: 'dropdown2',
       );
-      
+
       setState(() {
         items2 = List<String>.from(newItems);
         if (selectedItem2 != null && !newItems.contains(selectedItem2)) {
           selectedItem2 = null;
         }
-        
+
         tasks.removeWhere((key, value) {
           String taskItem2 = key.split(' - ')[1];
           return !newItems.contains(taskItem2);
         });
       });
-      
+
       await _databaseService.saveTasks(tasks);
     } catch (e) {
       print('Error updating items2: $e');
@@ -193,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
         String lastKey = tasks.keys.last;
         tasks.remove(lastKey);
       });
-      
+
       try {
         await _databaseService.saveTasks(tasks);
       } catch (e) {
@@ -210,7 +211,7 @@ class _MyHomePageState extends State<MyHomePage> {
         tasks[newLabel] = taskData;
       }
     });
-    
+
     try {
       await _databaseService.saveTasks(tasks);
     } catch (e) {
@@ -218,7 +219,8 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void editSubtaskLabel(String parentKey, String oldKey, String newLabel) async {
+  void editSubtaskLabel(
+      String parentKey, String oldKey, String newLabel) async {
     setState(() {
       bool? value = tasks[parentKey]?.subtasks[oldKey];
       if (value != null) {
@@ -226,12 +228,24 @@ class _MyHomePageState extends State<MyHomePage> {
         tasks[parentKey]?.subtasks[newLabel] = value;
       }
     });
-    
+
     try {
       await _databaseService.saveTasks(tasks);
     } catch (e) {
       print('Error editing subtask label: $e');
     }
+  }
+
+  List<MapEntry<String, TaskData>> _filteredTasks() {
+    if (selectedItem1 == null || selectedItem2 == null) {
+      return [];
+    }
+    return tasks.entries.where((entry) {
+      final taskKeyParts = entry.key.split(' - ');
+      return taskKeyParts.length == 2 &&
+          taskKeyParts[0] == selectedItem1 &&
+          taskKeyParts[1] == selectedItem2;
+    }).toList();
   }
 
   @override
@@ -279,7 +293,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  ...tasks.entries.map((entry) {
+                  ..._filteredTasks().map((entry) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -300,8 +314,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           },
                           onAddSubtask: () => addSubtask(entry.key),
                           onDelete: () => deleteTask(entry.key),
-                          onToggleSubtasks: () => toggleSubtasksVisibility(entry.key),
-                          onLabelEdit: (newLabel) => editTaskLabel(entry.key, newLabel),
+                          onToggleSubtasks: () =>
+                              toggleSubtasksVisibility(entry.key),
+                          onLabelEdit: (newLabel) =>
+                              editTaskLabel(entry.key, newLabel),
                         ),
                         if (entry.value.areSubtasksVisible)
                           ...entry.value.subtasks.entries.map((subtask) {
@@ -313,7 +329,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                     value: subtask.value,
                                     onChanged: (bool? newValue) async {
                                       setState(() {
-                                        entry.value.subtasks[subtask.key] = newValue ?? false;
+                                        entry.value.subtasks[subtask.key] =
+                                            newValue ?? false;
                                       });
                                       try {
                                         await _databaseService.saveTasks(tasks);
@@ -323,39 +340,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     },
                                   ),
                                   Expanded(
-                                    child: GestureDetector(
-                                      onDoubleTap: () {
-                                        TextEditingController controller = TextEditingController(text: subtask.key);
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Edit Subtask'),
-                                            content: TextField(
-                                              controller: controller,
-                                              autofocus: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Subtask Name',
-                                                border: OutlineInputBorder(),
-                                              ),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(context),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  editSubtaskLabel(entry.key, subtask.key, controller.text);
-                                                  Navigator.pop(context);
-                                                },
-                                                child: const Text('Save'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      child: Text(subtask.key),
-                                    ),
+                                    child: Text(subtask.key),
                                   ),
                                 ],
                               ),
